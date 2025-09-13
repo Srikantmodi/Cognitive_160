@@ -1,0 +1,67 @@
+{
+  "name": "study-chatbot-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Study Chatbot with PDF processing and AI integration",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "chatbot",
+    "pdf",
+    "ai",
+    "gemini",
+    "granite",
+    "study"
+  ],
+  "author": "Study Chatbot Team",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "compression": "^1.7.4",
+    "compromise": "^14.10.0",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "form-data": "^4.0.4",
+    "franc": "^6.1.0",
+    "helmet": "^7.1.0",
+    "js-tiktoken": "^1.0.12",
+    "keyword-extractor": "^0.0.28",
+    "lodash": "^4.17.21",
+    "mammoth": "^1.6.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "natural": "^6.5.0",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
+    "openai": "^4.67.3",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "pdf2pic": "^3.0.3",
+    "sentiment": "^5.0.2",
+    "sharp": "^0.32.6",
+    "sqlite3": "^5.1.6",
+    "stopword": "^2.0.8",
+    "string-similarity": "^4.0.4",
+    "tesseract.js": "^5.0.4",
+    "tiktoken": "^1.0.10",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
