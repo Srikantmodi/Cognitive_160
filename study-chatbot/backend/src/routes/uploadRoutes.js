@@ -120,21 +120,8 @@ router.post('/pdf', upload.array('pdfs', 10), async (req, res) => {
       });
     }
 
-    logger.info(`Processing ${req.files.length} PDF files for session ${sessionId}`);
-
-    // Enhanced processing options with cross-document support
-    const processingOptions = {
-      useEnhancedProcessing: true,
-      enableOCR: true,
-      enableSemanticAnalysis: true,
-      enableCrossDocumentSearch: true, // Enable cross-document capabilities
-      chunkingOptions: {
-        maxChunkSize: 1000,
-        respectSentences: true,
-        respectParagraphs: true,
-        overlap: 200 // Add overlap for better context
-      }
-    };
+    const results = [];
+    const errors = [];
 
     // Use enhanced document service for processing
     const processingResult = await documentService.processDocuments(
@@ -146,78 +133,48 @@ router.post('/pdf', upload.array('pdfs', 10), async (req, res) => {
         size: file.size
       })),
       sessionId,
-      processingOptions
+      {
+        useEnhancedProcessing: true,
+        enableOCR: true,
+        enableSemanticAnalysis: true,
+        chunkingOptions: {
+          maxChunkSize: 1000,
+          respectSentences: true,
+          respectParagraphs: true
+        }
+      }
     );
 
     // Update session stats
     configService.updateSessionStats(sessionId, 'documentsUploaded');
 
-    // Add chat history entry for multiple file upload
-    try {
-      await chatHistoryService.initialize();
-      await chatHistoryService.addMessage(sessionId, {
-        type: 'system',
-        content: `Successfully uploaded and processed ${processingResult.processed} PDF files. Cross-document search is now enabled for this session.`,
-        metadata: {
-          uploadEvent: true,
-          filesProcessed: processingResult.processed,
-          totalFiles: req.files.length,
-          documentIds: processingResult.results?.map(r => r.documentId) || [],
-          crossDocumentEnabled: true
-        },
-        timestamp: new Date().toISOString()
-      });
-
-      // Add each file to history
-      for (const result of processingResult.results || []) {
-        await chatHistoryService.addFileToHistory(sessionId, {
-          filename: result.filename,
-          originalname: result.originalname,
-          documentId: result.documentId,
-          processingResult: result,
-          status: 'processed',
-          crossDocumentEnabled: true,
-          chunkCount: result.chunkCount,
-          wordCount: result.wordCount
-        });
-      }
-    } catch (historyError) {
-      logger.warn('Failed to update chat history:', historyError);
-    }
-
-    // Enhanced response with cross-document capabilities
-    const response = {
+    return res.status(200).json({
       success: true,
       message: `Enhanced processing completed: ${processingResult.processed} files processed successfully`,
-      sessionId,
-      processed: processingResult.processed,
-      errors: processingResult.errors || [],
-      results: (processingResult.results || []).map(doc => ({
-        ...doc,
-        canCrossReference: true,
-        searchable: true,
-        crossDocumentEnabled: true
-      })),
-      sessionStats: processingResult.sessionStats,
-      crossDocumentFeatures: {
-        enabled: true,
-        totalDocuments: processingResult.sessionStats?.totalDocuments || processingResult.processed,
-        totalChunks: processingResult.sessionStats?.totalChunks || 0,
-        searchCapabilities: ['semantic', 'keyword', 'cross-reference'],
-        aiCapabilities: ['multi-document-qa', 'source-attribution', 'context-switching']
-      },
-      processingOptions
+      ...processingResult
+    });
+
+    // Return results
+    const response = {
+      success: true,
+      message: `Processed ${results.length} files successfully`,
+      results,
+      sessionId
     };
 
-    return res.status(200).json(response);
+    if (errors.length > 0) {
+      response.errors = errors;
+      response.message += `, ${errors.length} files failed`;
+    }
+
+    res.status(200).json(response);
 
   } catch (error) {
     logger.error('Error in PDF upload endpoint:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to process uploaded files',
-      error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message
     });
   }
 });
