@@ -101,21 +101,12 @@ class EnhancedDocumentProcessor {
                 processingMethod: 'pdf_parse'
             };
 
-            // Enhanced PDF processing: detect if OCR is needed
+            // Enhanced PDF processing: OCR disabled for stability
             const textDensity = extractedText.length / (data.numpages || 1);
             
             if (textDensity < 100) { // Likely scanned PDF
-                logger.info('Low text density detected, attempting OCR...');
-                try {
-                    const ocrText = await this.performOCR(buffer);
-                    if (ocrText && ocrText.length > extractedText.length) {
-                        extractedText = ocrText;
-                        metadata.processingMethod = 'ocr_enhanced';
-                        metadata.ocrConfidence = this.calculateOCRConfidence(ocrText);
-                    }
-                } catch (ocrError) {
-                    logger.warn('OCR processing failed, using extracted text:', ocrError.message);
-                }
+                logger.info('Low text density detected, but OCR is disabled for stability');
+                metadata.processingMethod = 'text_extraction_low_density';
             }
 
             // Table detection (simplified)
@@ -157,23 +148,10 @@ class EnhancedDocumentProcessor {
 
     async performOCR(buffer, options = {}) {
         try {
-            // Convert PDF pages to images using sharp (simplified approach)
-            logger.info('Starting OCR processing...');
-            
-            const { data: { text, confidence } } = await tesseract.recognize(buffer, 'eng', {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        logger.info(`OCR Progress: ${Math.round(m.progress * 100)}%`);
-                    }
-                },
-                ...options
-            });
-
-            return {
-                text,
-                confidence: Math.round(confidence || 0),
-                method: 'tesseract'
-            };
+            // Skip OCR for PDFs as they need special handling
+            // This is a simplified version that focuses on text extraction
+            logger.info('OCR processing skipped for PDF - using text extraction instead');
+            return null;
 
         } catch (error) {
             logger.error('OCR processing failed:', error);
